@@ -48,15 +48,18 @@ run_sim <- function(rate, children_number, immunization, immunization_rate){
   return(children)
 }
 
+
 getNodes <- function(infected){
   nodes <- data.frame(
+    "id"             = seq(1:length(infected)),
     "shape"          = rep("dot", length(infected)),
     "shadow"         = rep(TRUE, length(infected)),
     "title"          = ifelse(infected == 1, "Infected", "Not Infected"),
     "label"          = 1:length(infected),
     "size"           = rep(8, length(infected)),
     "borderWidth"    = rep(2, length(infected)),
-    "color"          = ifelse(infected == 1, "red", "gray")
+   # "color"          = ifelse(infected == 1, "red", "gray"),
+    "group"          = ifelse(infected == 1, "Infected", "Not Infected")
   )
   return(nodes)
 }

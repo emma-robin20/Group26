@@ -6,7 +6,7 @@ shiny::shinyOptions(error = "browser")
 
 # User-Interface 
 ui <- shinydashboard::dashboardPage(
-  shinydashboard::dashboardHeader(title = "Group 26!"),
+  shinydashboard::dashboardHeader(title = "ISYE 6644: Group 26"),
   shinydashboard::dashboardSidebar(
     collapsed = TRUE,
     shinydashboard::sidebarMenu(
@@ -191,8 +191,11 @@ server <- function(input, output, session) {
       
       output$network_vis <- renderVisNetwork({
         visNetwork(nodes, edges) %>%
-          visOptions(highlightNearest = TRUE,
-                     selectedBy = "label") # %>%
+          visEdges(arrows = "to") %>%
+          visGroups(groupname = "Infected", color = "red") %>% 
+          visGroups(groupname = "Not Infected", color = "gray")          
+         # visOptions(highlightNearest = TRUE,
+         #            selectedBy = "label") # %>%
           # visOptions(manipulation = TRUE) %>%
           # visIgraphLayout(layout = "layout_nicely", randomSeed = 1234)
       })
