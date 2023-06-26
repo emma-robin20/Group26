@@ -1,6 +1,8 @@
 library(shiny)
 library(shinydashboard)
 library(visNetwork)
+library(ggplot2)
+library(tidyr)
 source("sick_simulation.R")
 shiny::shinyOptions(error = "browser")
 
@@ -13,6 +15,7 @@ ui <- shinydashboard::dashboardPage(
       sidebarMenu(
         menuItem("Network", tabName = "network"),
         menuItem("Monte Carlos", tabName = "monte_carlos"),
+        menuItem("Timeline", tabName = "areachart"),
         menuItem("Settings", tabName = "settings")
       )
     )
@@ -68,6 +71,28 @@ ui <- shinydashboard::dashboardPage(
                   collapsed = FALSE,
                   actionButton(inputId = "save_data",
                                label = "Save Data")
+                )
+              )
+      ),
+      tabItem("areachart",
+              fluidRow(
+                shinydashboard::box(
+                  width = 12,
+                  solidHeader = FALSE,
+                  collapsible = FALSE,
+                  collapsed = FALSE,
+                  # sliderInput(
+                  #   inputId = "day_slider",
+                  #   label = "Day",
+                  #   min = 1,
+                  #   max = 20,
+                  #   value = 1,
+                  #   width = "100%",
+                  #   animate = animationOptions(loop = FALSE, interval = 1000)
+                  # ),
+                  plotOutput("area_chart"),
+                  plotOutput("hist_chart")
+                  # actionButton(inputId = "save_data_one", label = "Save Data")
                 )
               )
       ),
@@ -146,6 +171,8 @@ server <- function(input, output, session) {
       ))
   })
   
+  
+  
   monteCarlosData <- reactiveVal(value = data.frame())
   observeEvent(input$run_monte_carlos,{
     all_data <- data.frame()
@@ -191,16 +218,39 @@ server <- function(input, output, session) {
       
       output$network_vis <- renderVisNetwork({
         visNetwork(nodes, edges) %>%
-          visEdges(arrows = "to") %>%
+          visEdges(arrows = "from") %>%
           visGroups(groupname = "Infected", color = "red") %>% 
-          visGroups(groupname = "Not Infected", color = "gray")          
-         # visOptions(highlightNearest = TRUE,
-         #            selectedBy = "label") # %>%
-          # visOptions(manipulation = TRUE) %>%
-          # visIgraphLayout(layout = "layout_nicely", randomSeed = 1234)
+          visGroups(groupname = "Not Infected", color = "gray") %>%         
+          visOptions(highlightNearest = TRUE,
+                     selectedBy = "label")  %>%
+           # visOptions(manipulation = TRUE) %>%
+           visIgraphLayout(layout = "layout_nicely", randomSeed = 1234)
       })
     }
   })
+  
+  output$area_chart <-renderPlot({
+    simulationOutputs() %>% 
+      dplyr::group_by(day) %>%
+      dplyr::summarize(num_inf = sum(infected_e)) %>%
+      ggplot()+geom_area(aes(day, num_inf), fill = "red", alpha=0.6) +
+      labs(title="Total Students Infected with Flu Over Time",
+           x ="Days", y = "Number of Students Infected")+
+      theme_classic()
+  })
+  
+  output$hist_chart <-renderPlot({
+    simulationOutputs() %>% 
+      dplyr::filter(simulationOutputs()$day == simulationOutputs()$day_infected) %>%
+      dplyr::group_by(day) %>%
+      dplyr::summarize(num_inf = sum(infected_e)) %>%
+      ggplot()+
+      geom_area(aes(day, num_inf), fill = "red", alpha=0.6) +
+      labs(title="Count of Students Infected with Flu Per Day",
+           x ="Days", y = "Count of Students Infected") +
+      theme_classic()
+  })
+  
   
   observeEvent(input$save_data_one,{
     write.csv(
