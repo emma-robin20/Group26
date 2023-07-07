@@ -48,7 +48,7 @@ ui <- shinydashboard::dashboardPage(
                 shinydashboard::box(
                   width = 4,
                   solidHeader = TRUE,
-                  collapsible = TRUE,
+                  collapsible = FALSE,
                   collapsed = FALSE,
                   numericInput(inputId = "num_runs",
                                label = "Number of Runs",
@@ -59,7 +59,7 @@ ui <- shinydashboard::dashboardPage(
                 shinydashboard::box(
                   width = 4,
                   solidHeader = TRUE,
-                  collapsible = TRUE,
+                  collapsible = FALSE,
                   collapsed = FALSE,
                   actionButton(inputId = "run_monte_carlos",
                                label = "Run Monte Carlos!")
@@ -67,10 +67,19 @@ ui <- shinydashboard::dashboardPage(
                 shinydashboard::box(
                   width = 4,
                   solidHeader = TRUE,
-                  collapsible = TRUE,
+                  collapsible = FALSE,
                   collapsed = FALSE,
                   actionButton(inputId = "save_data",
                                label = "Save Data")
+                )
+              ),
+              fluidRow(
+                shinydashboard::box(
+                  width = 12,
+                  solidHeader = TRUE,
+                  collapsible = TRUE,
+                  collapsed = FALSE,
+                  plotOutput("monte_carlo_outputs")
                 )
               )
       ),
@@ -178,18 +187,40 @@ server <- function(input, output, session) {
     all_data <- data.frame()
     for(i in 1:input$num_runs){
       print(i)
-      temp <- simulationOutputs(run_sim(
+      temp <- run_sim(
         rate = input$infection_rate,
         children_number = input$children_amount,
         immunization = input$immunization_on,
         immunization_rate = input$immunization_prob
-      ))
+      )
+      temp$run <- i
       all_data <- rbind(all_data, temp)
     }
     monteCarlosData(all_data)
     shinyalert::shinyalert("Finished!",
                            "Monte Carlos Run!", 
                            type = "success")
+  })
+  
+  output$monte_carlo_outputs <- renderPlot({
+    df <- monteCarlosData()
+    if(nrow(df) == 0){
+      return(NULL)
+    }
+    rounds <- max(df$run)
+    df2 <- data.frame(
+      "TotalRounds" = numeric(rounds),
+      stringsAsFactors = FALSE
+    )
+
+    for(i in 1:rounds){
+      temp <- df[which(df$run == i),]
+      r <- max(temp$day)
+      df2$TotalRounds[i] <- r
+    }
+    ggplot(df2, aes(x=TotalRounds)) + 
+      geom_histogram() + 
+      geom_histogram(color="darkblue", fill="lightblue")
   })
   
   observeEvent(input$map_slider, {
@@ -211,7 +242,6 @@ server <- function(input, output, session) {
   
   observeEvent(update_net_vis(), {
     temp <- update_net_vis()
-    # browser()
     if(nrow(temp) > 0){
       nodes <- getNodes(infected = temp$infected_e)
       edges <- getEdges(df = temp)
