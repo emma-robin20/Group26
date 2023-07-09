@@ -1,4 +1,4 @@
-run_sim <- function(rate, children_number, immunization, immunization_rate){
+run_sim <- function(rate, children_number, immunization, immunization_rate, days_spread){
   children_temp <- data.frame(
     "number"          = 1:children_number,
     "infected_s"      = rep(0, children_number),
@@ -34,7 +34,7 @@ run_sim <- function(rate, children_number, immunization, immunization_rate){
     for(i in 1:nrow(children_temp)){
       # can child1 infect child2
       if(children_temp$infected_s[i] == 0 | 
-         children_temp$days_infected[i] > 3){next}
+         children_temp$days_infected[i] > days_spread){next}
       # child is infected 
       children_temp$days_infected[i] <- children_temp$days_infected[i]+1
       for(j in 1:nrow(children_temp)){
@@ -57,7 +57,7 @@ run_sim <- function(rate, children_number, immunization, immunization_rate){
     # browser()
     spreading <- (length(which(children_temp$rate == rate)) != 
       length(which(children_temp$infected_s == 1)))
-    if(length(which(children_temp$days_infected %in% c(1,2,3))) == 0){
+    if(length(which(children_temp$days_infected %in% 1:days_spread)) == 0){
       spreading <- FALSE
     }
   }

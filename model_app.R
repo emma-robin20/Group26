@@ -17,7 +17,7 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
       sidebarMenu(
         menuItem("Infection Network", tabName = "network"),
         menuItem("Infection Timeline", tabName = "areachart"),
-        menuItem("Monte Carlos No Immunizations", tabName = "monte_carlos")      )
+        menuItem("Monte Carlos", tabName = "monte_carlos")      )
     )
   ),
   dashboardBody(
@@ -82,6 +82,13 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                   max = 100,
                   value = 2,
                   step = 1)),
+              numericInput(
+                inputId = "days_amount",
+                label = "Number of Days a Student Can Affect Another",
+                min = 1,
+                max = 1000,
+                value = 3,
+                step = 1),
                 
               sidebarPanel(
                 sliderInput(
@@ -223,12 +230,14 @@ server <- function(input, output, session) {
   observeEvent(c(input$infection_rate, 
                  input$children_amount, 
                  input$immunization_on,
-                 input$immunization_prob),{
+                 input$immunization_prob,
+                 input$days_amount),{
       simulationOutputs(run_sim(
         rate = input$infection_rate,
         children_number = input$children_amount,
         immunization = input$immunization_on,
-        immunization_rate = input$immunization_prob
+        immunization_rate = input$immunization_prob,
+        days_spread = input$days_amount
       ))
   })
   
@@ -243,7 +252,8 @@ server <- function(input, output, session) {
         rate = input$infection_rate,
         children_number = input$children_amount,
         immunization = input$immunization_on,
-        immunization_rate = input$immunization_prob
+        immunization_rate = input$immunization_prob,
+        days_spread = input$days_amount
       )
       temp$run <- i
       all_data <- rbind(all_data, temp)
