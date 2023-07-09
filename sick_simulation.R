@@ -6,11 +6,13 @@ run_sim <- function(rate, children_number, immunization, immunization_rate){
     "day"             = rep(1, children_number),
     "infected_from"   = rep("", children_number),
     "rate"            = rep(rate, children_number),
-    "day_infected"    = rep("", children_number)
+    "day_infected"    = rep("", children_number),
+    "days_infected"   = rep(0, children_number)
   )
   
   children_temp$infected_s[which(children_temp$number == 1)] <- 1
   children_temp$infected_e[which(children_temp$number == 1)] <- 1
+  # children_temp$days_infected[which(children_temp$number == 1)] <- 1
   
   if(immunization){
     for(i in 2:nrow(children_temp)){
@@ -22,13 +24,19 @@ run_sim <- function(rate, children_number, immunization, immunization_rate){
   
   children <- data.frame()
   day <- 1
+  # browser()
+  spreading <- (length(which(children_temp$rate == rate)) != 
+    length(which(children_temp$infected_s == 1)))
   # loop until all children are infected
-  while(length(which(children_temp$rate == rate)) != 
-        length(which(children_temp$infected_s == 1))){
+  while(spreading){
+    # print(day)
     # loop through each child to the next - if infect can spread
     for(i in 1:nrow(children_temp)){
       # can child1 infect child2
-      if(children_temp$infected_s[i] == 0){next}
+      if(children_temp$infected_s[i] == 0 | 
+         children_temp$days_infected[i] > 3){next}
+      # child is infected 
+      children_temp$days_infected[i] <- children_temp$days_infected[i]+1
       for(j in 1:nrow(children_temp)){
         # already infected
         if(children_temp$infected_s[j] == 1){next}
@@ -46,6 +54,12 @@ run_sim <- function(rate, children_number, immunization, immunization_rate){
     children_temp$infected_s <- children_temp$infected_e
     day <- day + 1
     children_temp$day <- day
+    # browser()
+    spreading <- (length(which(children_temp$rate == rate)) != 
+      length(which(children_temp$infected_s == 1)))
+    if(length(which(children_temp$days_infected %in% c(1,2,3))) == 0){
+      spreading <- FALSE
+    }
   }
   return(children)
 }

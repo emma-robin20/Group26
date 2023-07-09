@@ -307,11 +307,11 @@ server <- function(input, output, session) {
       output$network_vis <- renderVisNetwork({
         visNetwork(nodes, edges) %>%
           visEdges(arrows = "from") %>%
+          visIgraphLayout(layout = "layout_in_circle") %>%
           visGroups(groupname = "Infected", color = "red") %>% 
           visGroups(groupname = "Not Infected", color = "gray") %>%         
           visOptions(highlightNearest = TRUE,
                      selectedBy = "label")  %>%
-           # visOptions(manipulation = TRUE) %>%
            visIgraphLayout(layout = "layout_nicely", randomSeed = 1234)
       })
     }
