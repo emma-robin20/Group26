@@ -7,17 +7,17 @@ source("sick_simulation.R")
 shiny::shinyOptions(error = "browser")
 
 # User-Interface 
-ui <- shinydashboard::dashboardPage(
+ui <- shinydashboard::dashboardPage(#skin = "#003057",
+  # setSliderColor(c("#B3A369", "#B3A369","#B3A369","#B3A369"),c(1,2,3,4)),
+  
   shinydashboard::dashboardHeader(title = "ISYE 6644: Group 26"),
   shinydashboard::dashboardSidebar(
     collapsed = TRUE,
     shinydashboard::sidebarMenu(
       sidebarMenu(
-        menuItem("Network", tabName = "network"),
-        menuItem("Monte Carlos", tabName = "monte_carlos"),
-        menuItem("Timeline", tabName = "areachart"),
-        menuItem("Settings", tabName = "settings")
-      )
+        menuItem("Infection Network", tabName = "network"),
+        menuItem("Infection Timeline", tabName = "areachart"),
+        menuItem("Monte Carlos No Immunizations", tabName = "monte_carlos")      )
     )
   ),
   dashboardBody(
@@ -33,7 +33,7 @@ ui <- shinydashboard::dashboardPage(
                       inputId = "day_slider",
                       label = "Day",
                       min = 1,
-                      max = 20,
+                      max = 31,
                       value = 1,
                       width = "100%",
                       animate = animationOptions(loop = FALSE, interval = 1000)
@@ -41,46 +41,6 @@ ui <- shinydashboard::dashboardPage(
                     visNetworkOutput("network_vis"),
                     actionButton(inputId = "save_data_one", label = "Save Data")
                   )
-              )
-      ),
-      tabItem("monte_carlos",
-              fluidRow(
-                shinydashboard::box(
-                  width = 4,
-                  solidHeader = TRUE,
-                  collapsible = FALSE,
-                  collapsed = FALSE,
-                  numericInput(inputId = "num_runs",
-                               label = "Number of Runs",
-                               min = 0,
-                               max = 100000,
-                               value = 1000),
-                ),
-                shinydashboard::box(
-                  width = 4,
-                  solidHeader = TRUE,
-                  collapsible = FALSE,
-                  collapsed = FALSE,
-                  actionButton(inputId = "run_monte_carlos",
-                               label = "Run Monte Carlos!")
-                ),
-                shinydashboard::box(
-                  width = 4,
-                  solidHeader = TRUE,
-                  collapsible = FALSE,
-                  collapsed = FALSE,
-                  actionButton(inputId = "save_data",
-                               label = "Save Data")
-                )
-              ),
-              fluidRow(
-                shinydashboard::box(
-                  width = 12,
-                  solidHeader = TRUE,
-                  collapsible = TRUE,
-                  collapsed = FALSE,
-                  plotOutput("monte_carlo_outputs")
-                )
               )
       ),
       tabItem("areachart",
@@ -105,63 +65,155 @@ ui <- shinydashboard::dashboardPage(
                 )
               )
       ),
-      tabItem("settings",
-              fluidRow(
-                shinydashboard::box(
-                  width = 6,
-                  solidHeader = TRUE,
-                  collapsible = TRUE,
-                  collapsed = FALSE,
-                  sliderInput(
-                    inputId = "infection_rate",
-                    label = "Infection Rate (%)",
-                    min = 1,
-                    max = 100,
-                    value = 2,
-                    step = 1)
-                ),
-                shinydashboard::box(
-                  width = 6,
-                  solidHeader = TRUE,
-                  collapsible = TRUE,
-                  collapsed = FALSE,
-                  numericInput(
-                    inputId = "children_amount",
-                    label = "Number of Children",
-                    min = 1,
-                    max = 1000,
-                    value = 31,
-                    step = 1)
-                )
-              ),
-              fluidRow(
-                shinydashboard::box(
-                  width = 6,
-                  solidHeader = TRUE,
-                  collapsible = TRUE,
-                  collapsed = FALSE,
-                  checkboxInput(inputId = "immunization_on",
+      tabItem("monte_carlos",
+              sidebarPanel(
+                numericInput(
+                  inputId = "children_amount",
+                  label = "Number of Children",
+                  min = 1,
+                  max = 1000,
+                  value = 31,
+                  step = 1),
+                
+                sliderInput(
+                  inputId = "infection_rate",
+                  label = "Infection Rate (%)",
+                  min = 1,
+                  max = 100,
+                  value = 2,
+                  step = 1)),
+                
+              sidebarPanel(
+                sliderInput(
+                  inputId = "immunization_prob",
+                  label = "Immunization Probability",
+                  min = 1,
+                  max = 100,
+                  value = 50,
+                  step = 1),
+                checkboxInput(inputId = "immunization_on",
                               label = "Immunizations?",
-                              value = FALSE)
+                              value = FALSE)),
+              sidebarPanel(
+                numericInput(inputId = "num_runs",
+                               label = "Number of Runs",
+                               min = 0,
+                               max = 100000,
+                               value = 1000),
+                actionButton(inputId = "run_monte_carlos",
+                             label = "Run Monte Carlos!"),
                 ),
+              fluidRow(
                 shinydashboard::box(
-                  width = 6,
+                  width = 12,
                   solidHeader = TRUE,
                   collapsible = TRUE,
                   collapsed = FALSE,
-                  sliderInput(
-                    inputId = "immunization_prob",
-                    label = "Immunization Probability",
-                    min = 1,
-                    max = 100,
-                    value = 50,
-                    step = 1)
+                sliderInput(
+                  inputId = "bins",
+                  label = "Number of Bins",
+                  min = 1,
+                  max = 50,
+                  value = 25))
+            
+               
+                ) ,
+              
+              fluidRow(
+                shinydashboard::box(
+                  width = 12,
+                  solidHeader = TRUE,
+                  collapsible = TRUE,
+                  collapsed = FALSE,
+                  plotOutput("monte_carlo_outputs")
                 )
               )
       )
+    ),
+      tags$head(tags$style(HTML('
+      
+        /* logo */
+        .skin-blue .main-header .logo {
+                              background-color: #003057;
+                              }
+
+        /* logo when hovered */
+        .skin-blue .main-header .logo:hover {
+                              background-color: #003057;
+                              }
+
+        /* navbar (rest of the header) */
+        .skin-blue .main-header .navbar {
+                              background-color: #003057;
+                              }
+
+        /* main sidebar */
+        .skin-blue .main-sidebar {
+                              background-color: #003057;
+                              }
+
+        /* active selected tab in the sidebarmenu */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+                              background-color: #A28D5B;
+        }
+                              
+                              /* other links in the sidebarmenu */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu a{
+                              background-color: #B3A369;
+                              color: #000000;
+                              }
+
+        /* other links in the sidebarmenu when hovered */
+         .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+                              background-color: #A28D5B;
+                              }
+        /* toggle button when hovered  */                    
+         .skin-blue .main-header .navbar .sidebar-toggle:hover{
+                              background-color: #B3A369;
+         }
+                              
+      /* change color of sliders */
+      .js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {
+        background: #B3A369;
+          border-top: 1px solid #A28D5B ;
+        border-bottom: 1px solid #A28D5B ;}
+        
+        /* changes the colour of the number tags */
+          .irs-from, .irs-to, .irs-single { background: #B3A369 }
+          
+      /* change color of sliders */
+      .js-irs-1 .irs-single, .js-irs-1 .irs-bar-edge, .js-irs-1 .irs-bar {
+        background: #B3A369;
+          border-top: 1px solid #A28D5B ;
+        border-bottom: 1px solid #A28D5B ;}
+        
+        /* changes the colour of the number tags */
+          .irs-from, .irs-to, .irs-single { background: #B3A369 }
+        
+        
+        /* change color of sliders */
+      .js-irs-2 .irs-single, .js-irs-2 .irs-bar-edge, .js-irs-2 .irs-bar {
+        background: #B3A369;
+          border-top: 1px solid #A28D5B ;
+        border-bottom: 1px solid #A28D5B ;}
+        
+        /* changes the colour of the number tags */
+          .irs-from, .irs-to, .irs-single { background: #B3A369 }
+         
+         /* change color of sliders */
+      .js-irs-3 .irs-single, .js-irs-3 .irs-bar-edge, .js-irs-3 .irs-bar {
+        background: #B3A369;
+          border-top: 1px solid #A28D5B ;
+        border-bottom: 1px solid #A28D5B ;}
+        
+        /* changes the colour of the number tags */
+          .irs-from, .irs-to, .irs-single { background: #B3A369 }                       
+                                ')))
     )
+    
+    
   )
-)
+
 
 # 
 server <- function(input, output, session) {
@@ -197,7 +249,7 @@ server <- function(input, output, session) {
       all_data <- rbind(all_data, temp)
     }
     monteCarlosData(all_data)
-    shinyalert::shinyalert("Finished!",
+    shinyalert::shinyalert("Finished! Your distrobution graph is ready to view",
                            "Monte Carlos Run!", 
                            type = "success")
   })
@@ -218,9 +270,15 @@ server <- function(input, output, session) {
       r <- max(temp$day)
       df2$TotalRounds[i] <- r
     }
+    
+    bins <- input$bins +1
+    
     ggplot(df2, aes(x=TotalRounds)) + 
-      geom_histogram() + 
-      geom_histogram(color="darkblue", fill="lightblue")
+      geom_histogram( color="#A28D5B", fill="#B3A369", bins = bins) +
+      # geom_density(alpha=.2, fill="gray") +
+      labs(title="Expected Number of Days for Epidemic to Last",
+           x ="Number of Runs", y = "Number of Days") +
+      theme_classic()
   })
   
   observeEvent(input$map_slider, {
@@ -263,7 +321,7 @@ server <- function(input, output, session) {
     simulationOutputs() %>% 
       dplyr::group_by(day) %>%
       dplyr::summarize(num_inf = sum(infected_e)) %>%
-      ggplot()+geom_area(aes(day, num_inf), fill = "red", alpha=0.6) +
+      ggplot()+geom_area(aes(day, num_inf), fill = "#003057", alpha=0.6) +
       labs(title="Total Students Infected with Flu Over Time",
            x ="Days", y = "Number of Students Infected")+
       theme_classic()
@@ -275,7 +333,7 @@ server <- function(input, output, session) {
       dplyr::group_by(day) %>%
       dplyr::summarize(num_inf = sum(infected_e)) %>%
       ggplot()+
-      geom_area(aes(day, num_inf), fill = "red", alpha=0.6) +
+      geom_area(aes(day, num_inf), fill = "#003057", alpha=0.6) +
       labs(title="Count of Students Infected with Flu Per Day",
            x ="Days", y = "Count of Students Infected") +
       theme_classic()
