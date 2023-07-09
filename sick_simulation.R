@@ -17,7 +17,7 @@ run_sim <- function(rate, children_number, immunization, immunization_rate, days
   if(immunization){
     for(i in 2:nrow(children_temp)){
       if(sample(1:100, 1) <= immunization_rate){
-        children_temp$rate[i] <- 0
+        children_temp$rate[i] <- -1
       }
     }
   }
@@ -34,12 +34,13 @@ run_sim <- function(rate, children_number, immunization, immunization_rate, days
     for(i in 1:nrow(children_temp)){
       # can child1 infect child2
       if(children_temp$infected_s[i] == 0 | 
-         children_temp$days_infected[i] > days_spread){next}
+         children_temp$days_infected[i] > days_spread | 
+         children_temp$rate[i] == -1){next}
       # child is infected 
       children_temp$days_infected[i] <- children_temp$days_infected[i]+1
       for(j in 1:nrow(children_temp)){
         # already infected
-        if(children_temp$infected_s[j] == 1){next}
+        if(children_temp$infected_s[j] == 1 | children_temp$rate[j] == -1){next}
         # child cannot spread from itself to itself
         if(children_temp$number[i] == children_temp$number[j]){next}
         # random number generation from 1-100 with 2 as the threshold of being able to infect

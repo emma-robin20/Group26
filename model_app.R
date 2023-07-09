@@ -81,14 +81,15 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                   min = 1,
                   max = 100,
                   value = 2,
-                  step = 1)),
-              numericInput(
-                inputId = "days_amount",
-                label = "Number of Days a Student Can Affect Another",
-                min = 1,
-                max = 1000,
-                value = 3,
-                step = 1),
+                  step = 1),
+                numericInput(
+                  inputId = "days_amount",
+                  label = "Number of Days a Student Can Affect Another",
+                  min = 1,
+                  max = 1000,
+                  value = 3,
+                  step = 1)
+                ),
                 
               sidebarPanel(
                 sliderInput(
@@ -287,7 +288,9 @@ server <- function(input, output, session) {
       geom_histogram( color="#A28D5B", fill="#B3A369", bins = bins) +
       # geom_density(alpha=.2, fill="gray") +
       labs(title="Expected Number of Days for Epidemic to Last",
-           x ="Number of Runs", y = "Number of Days") +
+           x ="Number of Days", y = "Count") +
+      scale_x_continuous(limits = c(0, max(df2$TotalRounds)), 
+                         breaks = seq(0, max(df2$TotalRounds), by = 2)) + 
       theme_classic()
   })
   
