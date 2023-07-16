@@ -19,7 +19,8 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
       sidebarMenu(
         menuItem("Infection Network", tabName = "network"),
         menuItem("Infection Timeline", tabName = "areachart"),
-        menuItem("Monte Carlos", tabName = "monte_carlos")      )
+        menuItem("Monte Carlos", tabName = "monte_carlos"),
+        menuItem("Monte Carlos Daily Distribution", tabName = "monte_carlos_daily"))
     )
   ),
   dashboardBody(
@@ -34,9 +35,9 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                     sliderInput(
                       inputId = "day_slider",
                       label = "Day",
-                      min = 1,
+                      min = 0,
                       max = 31,
-                      value = 1,
+                      value = 0,
                       width = "100%",
                       animate = animationOptions(loop = FALSE, interval = 1000)
                     ),
@@ -134,8 +135,7 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                   min = 1,
                   max = 50,
                   value = 20))
-                ) ,
-              
+                ),
               fluidRow(
                 shinydashboard::box(
                   width = 12,
@@ -157,6 +157,32 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                   )
                 )
 
+              )
+      ),
+      tabItem("monte_carlos_daily",
+              fluidRow(shinydashboard::box(
+                width = 12,
+                collapsible = FALSE,
+                title = "Run simmulation on Monte Carlos page to produce visualizations",
+              )),
+              fluidRow(
+                shinydashboard::box(
+                  width = 6,
+                  solidHeader = FALSE,
+                  collapsible = TRUE,
+                  collapsed = FALSE,
+                  title = "Day",
+                  uiOutput("hist_slider"),
+                  
+                ),
+                shinydashboard::box(
+                  width = 12,
+                  solidHeader = TRUE,
+                  collapsible = FALSE,
+                  collapsed = FALSE,
+                  title = "Distribution of Simmulated Infections by Day",
+                  plotOutput("monte_carlo_daily_hist")
+                )
               )
       )
     ),
@@ -338,6 +364,8 @@ server <- function(input, output, session) {
   
   df3
   })
+  
+  
   output$monte_carlo_avg_per_day <- renderPlot({
     df <- monteCarlosData()
     if(nrow(df) == 0){
@@ -364,12 +392,42 @@ server <- function(input, output, session) {
   
   })
   
+  output$hist_slider <- renderUI({
+    df <- monteCarlosData()
+    if(nrow(df) == 0){
+      return(NULL)
+    }
+    
+    sliderInput("hist_slider", "", 0,
+                max(df$day, isolate(input$hist_slider)), 1)
+  })
+  
+  output$monte_carlo_daily_hist <- renderPlot({
+    df <- monteCarlosData()
+    if(nrow(df) == 0){
+      return(NULL)
+    }
+    
+
+    rounds <- max(df$run)
+    
+    select_day = input$hist_slider
+
+    df2 <- df %>%
+      filter(day == select_day) %>%
+      group_by(run) %>%
+      dplyr::summarize(tot_infected = sum(infected_e))
+    
+    ggplot(df2, aes(x=tot_infected)) + 
+      geom_histogram( color="#A28D5B", fill="#B3A369") +
+      # geom_density(alpha=.2, fill="gray") +
+      labs(x ="Number of Infected Children", y = "Count of Simulations") +
+      scale_x_continuous(limits = c(0, max(df2$tot_infected)), 
+                         breaks = seq(0, max(df2$tot_infected), by = 2)) + 
+      theme_classic()
+  })
   
   
-  # output$ibox <- renderText({
-  #   # RETURN EXPECTED VALUE
-  #   paste0(getEV(input$infection_rate, input$children_amount, input$immunization_on))
-  # })
   
   observeEvent(input$map_slider, {
     updateSliderInput(
