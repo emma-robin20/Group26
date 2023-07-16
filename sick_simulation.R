@@ -17,7 +17,9 @@ run_sim <- function(rate, children_number, immunization, immunization_rate, days
   if(immunization){
     for(i in 2:nrow(children_temp)){
       if(sample(1:100, 1) <= immunization_rate){
-        children_temp$rate[i] <- -1
+        # Adjusted Vaccine effectiveness (%) 36 [CI (21, 48)]
+        # Adjust rate of infection by Adjusted VE
+        children_temp$rate[i] <- ((children_temp$rate[i]/100) * .36)
       }
     }
   }
@@ -89,4 +91,17 @@ getEdges <- function(df){
     "color"    = rep("red", nrow(df))
   )
   return(edges)
+}
+
+
+getEV <- function(rate, children_number, immunization) {
+  if(immunization) {
+    return(((rate/100)*.5) +((rate/100) *.36 *.5))
+  } 
+  else {
+    return((rate/100))
+  }
+  
+  
+  
 }

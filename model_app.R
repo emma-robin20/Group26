@@ -3,6 +3,7 @@ library(shinydashboard)
 library(visNetwork)
 library(ggplot2)
 library(tidyr)
+library(dplyr)
 source("sick_simulation.R")
 shiny::shinyOptions(error = "browser")
 
@@ -101,7 +102,15 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                   step = 1),
                 checkboxInput(inputId = "immunization_on",
                               label = "Immunizations?",
-                              value = FALSE)),
+                              value = FALSE),
+                shinydashboard::box(
+                  width = 12,
+                  collapsible = TRUE,
+                  collapsed = TRUE,
+                  title = "Note On Immunizations",
+                  p('Average Flu Vaccine Effectiveness as of 2022 is 36%. If a child is assigned as immunized effectiveness will follow 2022 average effectiveness.')
+                  )
+              ),
               sidebarPanel(
                 numericInput(inputId = "num_runs",
                                label = "Number of Runs",
@@ -113,18 +122,21 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                 ),
               fluidRow(
                 shinydashboard::box(
-                  width = 12,
+                  width = 8,
                   solidHeader = TRUE,
                   collapsible = TRUE,
-                  collapsed = FALSE,
+                  collapsed = TRUE,
+                  title = "Number of Bins",
                 sliderInput(
                   inputId = "bins",
-                  label = "Number of Bins",
+                  label = "",
                   min = 1,
                   max = 50,
-                  value = 25))
-            
-               
+                  value = 20)),
+                shinydashboard::box(
+                  title = "Expected Value of Child Being Infected",
+                  width = 4,
+                  textOutput("ibox"))
                 ) ,
               
               fluidRow(
@@ -133,8 +145,18 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                   solidHeader = TRUE,
                   collapsible = TRUE,
                   collapsed = FALSE,
+                  title = "Expected Number of Days for Epidemic to Last",
                   plotOutput("monte_carlo_outputs")
+                ),
+                shinydashboard::box(
+                  width = 12,
+                  solidHeader = TRUE,
+                  collapsible = TRUE,
+                  collapsed = FALSE,
+                  title="Expected Number of Infections Per Day",
+                  plotOutput("monte_carlo_avg_per_day")
                 )
+
               )
       )
     ),
@@ -287,11 +309,40 @@ server <- function(input, output, session) {
     ggplot(df2, aes(x=TotalRounds)) + 
       geom_histogram( color="#A28D5B", fill="#B3A369", bins = bins) +
       # geom_density(alpha=.2, fill="gray") +
-      labs(title="Expected Number of Days for Epidemic to Last",
-           x ="Number of Days", y = "Count") +
+      labs(x ="Maximum Number of Days", y = "Count of Simulations") +
       scale_x_continuous(limits = c(0, max(df2$TotalRounds)), 
                          breaks = seq(0, max(df2$TotalRounds), by = 2)) + 
       theme_classic()
+  })
+  
+  
+  output$monte_carlo_avg_per_day <- renderPlot({
+    df <- monteCarlosData()
+    if(nrow(df) == 0){
+      return(NULL)
+    }
+    
+    rounds <- max(df$run)
+    
+    df2 <- df %>%
+      filter(infected_e == 1 & infected_s >= 1) %>%
+      dplyr::group_by(day) %>% 
+      dplyr::summarize(tot_infected = sum(infected_s)) %>%
+      mutate(avg_infected = tot_infected/rounds)
+      
+    ggplot(df2, aes(x=day, y =avg_infected) ) + 
+      geom_line(color="#A28D5B") +
+      # geom_density(alpha=.2, fill="gray") +
+      labs(x ="Day", y = "Average Number of Infections") +
+      scale_x_continuous(limits = c(0, max(df2$day)), 
+                         breaks = seq(0, max(df2$day), by = 2)) + 
+      theme_classic()
+  })
+  
+  
+  output$ibox <- renderText({
+    # RETURN EXPECTED VALUE
+    paste0(getEV(input$infection_rate, input$children_amount, input$immunization_on))
   })
   
   observeEvent(input$map_slider, {
@@ -336,7 +387,9 @@ server <- function(input, output, session) {
       dplyr::summarize(num_inf = sum(infected_e)) %>%
       ggplot()+geom_area(aes(day, num_inf), fill = "#003057", alpha=0.6) +
       labs(title="Total Students Infected with Flu Over Time",
-           x ="Days", y = "Number of Students Infected")+
+           x ="Day", y = "Number of Students Infected")+
+      scale_x_continuous(limits = c(0, max(simulationOutputs()$day)), 
+                         breaks = seq(0, max(simulationOutputs()$day), by = 2)) +
       theme_classic()
   })
   
@@ -347,8 +400,8 @@ server <- function(input, output, session) {
       dplyr::summarize(num_inf = sum(infected_e)) %>%
       ggplot()+
       geom_area(aes(day, num_inf), fill = "#003057", alpha=0.6) +
-      labs(title="Count of Students Infected with Flu Per Day",
-           x ="Days", y = "Count of Students Infected") +
+      labs(title="Number of Students Infected with Flu Per Day",
+           x ="Day", y = "Number of Students Infected") +
       theme_classic()
   })
   
