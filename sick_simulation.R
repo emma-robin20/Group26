@@ -3,7 +3,7 @@ run_sim <- function(rate, children_number, immunization, immunization_rate, days
     "number"          = 1:children_number,
     "infected_s"      = rep(0, children_number),
     "infected_e"      = rep(0, children_number),
-    "day"             = rep(1, children_number),
+    "day"             = rep(0, children_number),
     "infected_from"   = rep("", children_number),
     "rate"            = rep(rate, children_number),
     "day_infected"    = rep("", children_number),
@@ -25,7 +25,7 @@ run_sim <- function(rate, children_number, immunization, immunization_rate, days
   }
   
   children <- data.frame()
-  day <- 1
+  day <- 0
   # browser()
   spreading <- (length(which(children_temp$rate == rate)) != 
     length(which(children_temp$infected_s == 1)))
