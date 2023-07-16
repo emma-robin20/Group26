@@ -4,6 +4,7 @@ library(visNetwork)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+
 source("sick_simulation.R")
 shiny::shinyOptions(error = "browser")
 
@@ -132,11 +133,7 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                   label = "",
                   min = 1,
                   max = 50,
-                  value = 20)),
-                shinydashboard::box(
-                  title = "Expected Value of Child Being Infected",
-                  width = 4,
-                  textOutput("ibox"))
+                  value = 20))
                 ) ,
               
               fluidRow(
@@ -154,7 +151,10 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
                   collapsible = TRUE,
                   collapsed = FALSE,
                   title="Expected Number of Infections Per Day",
-                  plotOutput("monte_carlo_avg_per_day")
+                  plotOutput("monte_carlo_avg_per_day"),
+                  column(width = 12,
+                         dataTableOutput('avg_per_tb')
+                  )
                 )
 
               )
@@ -282,7 +282,7 @@ server <- function(input, output, session) {
       all_data <- rbind(all_data, temp)
     }
     monteCarlosData(all_data)
-    shinyalert::shinyalert("Finished! Your distrobution graph is ready to view",
+    shinyalert::shinyalert("Finished! Your visualizations are ready to view",
                            "Monte Carlos Run!", 
                            type = "success")
   })
@@ -315,7 +315,29 @@ server <- function(input, output, session) {
       theme_classic()
   })
   
+  output$avg_per_tb <- renderDataTable({
+    
+  df <- monteCarlosData()
+  if(nrow(df) == 0){
+    return(NULL)
+  }
   
+  rounds <- max(df$run)
+  
+  df2 <- df %>%
+    filter(infected_e == 1 & infected_s >= 1) %>%
+    dplyr::group_by(day) %>% 
+    dplyr::summarize(tot_infected = sum(infected_s)) %>%
+    mutate(avg_infected = tot_infected/rounds)
+  
+  
+  df3 <-df2 %>% 
+    select(c("day","avg_infected")) %>%
+    rename("Day" = "day",
+           "Average Number of Students Infected" = "avg_infected")
+  
+  df3
+  })
   output$monte_carlo_avg_per_day <- renderPlot({
     df <- monteCarlosData()
     if(nrow(df) == 0){
@@ -332,18 +354,22 @@ server <- function(input, output, session) {
       
     ggplot(df2, aes(x=day, y =avg_infected) ) + 
       geom_line(color="#A28D5B") +
+      geom_area(fill="#A28D5B", alpha = 0.3) +
       # geom_density(alpha=.2, fill="gray") +
       labs(x ="Day", y = "Average Number of Infections") +
       scale_x_continuous(limits = c(0, max(df2$day)), 
                          breaks = seq(0, max(df2$day), by = 2)) + 
       theme_classic()
+    
+  
   })
   
   
-  output$ibox <- renderText({
-    # RETURN EXPECTED VALUE
-    paste0(getEV(input$infection_rate, input$children_amount, input$immunization_on))
-  })
+  
+  # output$ibox <- renderText({
+  #   # RETURN EXPECTED VALUE
+  #   paste0(getEV(input$infection_rate, input$children_amount, input$immunization_on))
+  # })
   
   observeEvent(input$map_slider, {
     updateSliderInput(
