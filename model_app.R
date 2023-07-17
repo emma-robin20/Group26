@@ -162,12 +162,13 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
       tabItem("monte_carlos_daily",
               fluidRow(shinydashboard::box(
                 width = 12,
+                collapsed = TRUE,
                 collapsible = FALSE,
                 title = "Run simmulation on Monte Carlos page to produce visualizations",
               )),
               fluidRow(
                 shinydashboard::box(
-                  width = 6,
+                  width = 12,
                   solidHeader = FALSE,
                   collapsible = TRUE,
                   collapsed = FALSE,
@@ -263,7 +264,18 @@ ui <- shinydashboard::dashboardPage(#skin = "#003057",
         border-bottom: 1px solid #A28D5B ;}
         
         /* changes the colour of the number tags */
-          .irs-from, .irs-to, .irs-single { background: #B3A369 }                       
+          .irs-from, .irs-to, .irs-single { background: #B3A369 }  
+          
+          /* change color of sliders */
+      .js-irs-4 .irs-single, .js-irs-4 .irs-bar-edge, .js-irs-4 .irs-bar {
+        background: #B3A369;
+          border-top: 1px solid #A28D5B ;
+        border-bottom: 1px solid #A28D5B ;}
+        
+        /* changes the colour of the number tags */
+          .irs-from, .irs-to, .irs-single { background: #B3A369 }
+          
+          
                                 ')))
     )
     
